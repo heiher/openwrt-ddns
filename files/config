@@ -1,0 +1,9 @@
+config ddns 'auth'
+    option 'key' ''
+    option 'secret' ''
+
+config ddns 'record'
+    option 'domain' ''
+    option 'name' ''
+    option 'ipv4' '0'
+    option 'ipv6' '0'

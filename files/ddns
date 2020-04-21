@@ -1,0 +1,53 @@
+#!/bin/sh
+
+function get_ipv4() {
+    ip addr show dev pppoe-wan | grep 'inet ' | awk '{print $2}'
+}
+
+function get_ipv6() {
+    ip addr show dev br-lan | grep 'inet6 ' | grep dynamic | awk '{print $2}' | sed 's|/.*||g'
+}
+
+function put_ip() {
+    curl -X PUT https://api.godaddy.com/v1/domains/${3}/records/${4}/${5} \
+        -H "Authorization: sso-key ${1}:${2}" \
+        -H "Content-Type: application/json" \
+        --data "[{\"data\": \"${6}\",\"ttl\": 600}]"
+}
+
+function log() {
+    log='/tmp/log/ddns'
+    echo "[$(date +%Y%m%d.%H%M%S)] PUT ${2} TO ${4}.${3}" > ${log}.${1}
+}
+
+function main() {
+    key=$(uci get ddns.auth.key)
+    secret=$(uci get ddns.auth.secret)
+    domain=$(uci get ddns.record.domain)
+    name=$(uci get ddns.record.name)
+    is_ipv4=$(uci get ddns.record.ipv4)
+    is_ipv6=$(uci get ddns.record.ipv6)
+    ipv4=''
+    ipv6=''
+    while [ "${is_ipv4}" != "0" ] || [ "${is_ipv6}" != "0" ]; do
+        if [ "${is_ipv4}" != "0" ]; then
+            ip=$(get_ipv4)
+            if [ "${ipv4}" != "${ip}" ]; then
+                log '4' ${ip} ${domain} ${name}
+                put_ip ${key} ${secret} ${domain} 'A' ${name} ${ip}
+                ipv4=${ip}
+            fi
+        fi
+        if [ "${is_ipv6}" != "0" ]; then
+            ip=$(get_ipv6)
+            if [ "${ipv6}" != "${ip}" ]; then
+                log '6' ${ip} ${domain} ${name}
+                put_ip ${key} ${secret} ${domain} 'AAAA' ${name} ${ip}
+                ipv6=${ip}
+            fi
+        fi
+        sleep 120
+    done
+}
+
+main
