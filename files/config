@@ -1,0 +1,13 @@
+config ddns 'auth'
+	option email ''
+	option token ''
+
+config ddns 'set'
+	list records '1'
+
+config ddns '1'
+	option zone ''
+	option type ''
+	option name ''
+	option ttl ''
+	option proxied ''

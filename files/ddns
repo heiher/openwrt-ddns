@@ -1,0 +1,58 @@
+#!/bin/sh
+
+function get_ipv4() {
+    ip addr show dev pppoe-wan | grep 'inet ' | awk '{print $2}' | sort | head -n 1
+}
+
+function get_ipv6() {
+    ip addr show dev br-lan | grep 'inet6 ' | grep dynamic | awk '{print $2}' | sed 's|/.*||g' | sort | head -n 1
+}
+
+function put_ip() {
+    curl -X PUT "https://api.cloudflare.com/client/v4/zones/${3}/dns_records/${4}" \
+        -H "X-Auth-Email: ${1}" \
+        -H "Authorization: Bearer ${2}" \
+        -H "Content-Type:application/json" \
+        --data "{\"type\":\"${5}\",\"name\":\"${6}\",\"content\":\"${7}\",\"ttl\":${8},\"proxied\":${9}}"
+}
+
+function log() {
+    log='/tmp/log/ddns'
+    echo "[$(date +%Y%m%d.%H%M%S)] PUT ${2} TO ${3}" > ${log}.${1}
+}
+
+function main() {
+    email=$(uci get ddns.auth.email)
+    token=$(uci get ddns.auth.token)
+    records=$(uci get ddns.set.records)
+    ipv4=''
+    ipv6=''
+    while [ -n "${records}" ]; do
+        for record in ${records}; do
+            zone=$(uci get ddns.${record}.zone)
+            type=$(uci get ddns.${record}.type)
+            name=$(uci get ddns.${record}.name)
+            ttl=$(uci get ddns.${record}.ttl)
+            proxied=$(uci get ddns.${record}.proxied)
+            if [ "${type}" == "A" ]; then
+                ip=$(get_ipv4)
+                if [ "${ipv4}" != "${ip}" ]; then
+                    log '4' ${ip} ${name}
+                    put_ip ${email} ${token} ${zone} ${record} ${type} ${name} ${ip} ${ttl} ${proxied}
+                    ipv4=${ip}
+                fi
+            fi
+            if [ "${type}" == "AAAA" ]; then
+                ip=$(get_ipv6)
+                if [ "${ipv6}" != "${ip}" ]; then
+                    log '6' ${ip} ${name}
+                    put_ip ${email} ${token} ${zone} ${record} ${type} ${name} ${ip} ${ttl} ${proxied}
+                    ipv6=${ip}
+                fi
+            fi
+        done
+        sleep 120
+    done
+}
+
+main
