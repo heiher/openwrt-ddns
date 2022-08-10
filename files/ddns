@@ -39,7 +39,9 @@ function main() {
                 if [ "${ipv4}" != "${ip}" ]; then
                     log '4' ${ip} ${name}
                     put_ip ${email} ${token} ${zone} ${record} ${type} ${name} ${ip} ${ttl} ${proxied}
-                    ipv4=${ip}
+                    if [ $? -eq 0 ]; then
+                        ipv4=${ip}
+                    fi
                 fi
             fi
             if [ "${type}" == "AAAA" ]; then
@@ -47,7 +49,9 @@ function main() {
                 if [ "${ipv6}" != "${ip}" ]; then
                     log '6' ${ip} ${name}
                     put_ip ${email} ${token} ${zone} ${record} ${type} ${name} ${ip} ${ttl} ${proxied}
-                    ipv6=${ip}
+                    if [ $? -eq 0 ]; then
+                        ipv6=${ip}
+                    fi
                 fi
             fi
         done
