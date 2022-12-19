@@ -1,11 +1,13 @@
 #!/bin/sh
 
 function get_ipv4() {
-    ip addr show dev pppoe-wan | grep 'inet ' | awk '{print $2}' | sort | head -n 1
+    iface=$(uci get ddns.main.v4_iface)
+    ip addr show dev ${iface} | grep 'inet ' | awk '{print $2}' | sort | head -n 1
 }
 
 function get_ipv6() {
-    ip addr show dev br-lan | grep 'inet6 ' | grep dynamic | awk '{print $2}' | sed 's|/.*||g' | sort | head -n 1
+    iface=$(uci get ddns.main.v6_iface)
+    ip addr show dev ${iface} | grep 'inet6 ' | grep dynamic | grep -v deprecated | awk '{print $2}' | sed 's|/.*||g' | sort | head -n 1
 }
 
 function put_ip() {
