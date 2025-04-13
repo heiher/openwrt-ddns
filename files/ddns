@@ -1,12 +1,12 @@
 #!/bin/sh
 
 function get_ipv4() {
-    iface=$(uci get ddns.main.v4_iface)
+    iface=${1:-$(uci -q get ddns.main.v4_iface)}
     ip addr show dev ${iface} | grep 'inet ' | awk '{print $2}' | sort | head -n 1
 }
 
 function get_ipv6() {
-    iface=$(uci get ddns.main.v6_iface)
+    iface=${1:-$(uci -q get ddns.main.v6_iface)}
     ip addr show dev ${iface} | grep 'inet6 ' | grep dynamic | grep -v deprecated | awk '{print $2}' | sed 's|/.*||g' | sort | head -n 1
 }
 
@@ -24,20 +24,21 @@ function log() {
 }
 
 function main() {
-    email=$(uci get ddns.auth.email)
-    token=$(uci get ddns.auth.token)
-    records=$(uci get ddns.set.records)
+    email=$(uci -q get ddns.auth.email)
+    token=$(uci -q get ddns.auth.token)
+    records=$(uci -q get ddns.set.records)
     ipv4=''
     ipv6=''
     while [ -n "${records}" ]; do
         for record in ${records}; do
-            zone=$(uci get ddns.${record}.zone)
-            type=$(uci get ddns.${record}.type)
-            name=$(uci get ddns.${record}.name)
-            ttl=$(uci get ddns.${record}.ttl)
-            proxied=$(uci get ddns.${record}.proxied)
+            zone=$(uci -q get ddns.${record}.zone)
+            type=$(uci -q get ddns.${record}.type)
+            name=$(uci -q get ddns.${record}.name)
+            ttl=$(uci -q get ddns.${record}.ttl)
+            proxied=$(uci -q get ddns.${record}.proxied)
+            iface=$(uci -q get ddns.${record}.iface)
             if [ "${type}" == "A" ]; then
-                ip=$(get_ipv4)
+                ip=$(get_ipv4 ${iface})
                 if [ "${ipv4}" != "${ip}" ]; then
                     log '4' ${ip} ${name}
                     put_ip ${email} ${token} ${zone} ${record} ${type} ${name} ${ip} ${ttl} ${proxied}
@@ -47,7 +48,7 @@ function main() {
                 fi
             fi
             if [ "${type}" == "AAAA" ]; then
-                ip=$(get_ipv6)
+                ip=$(get_ipv6 ${iface})
                 if [ "${ipv6}" != "${ip}" ]; then
                     log '6' ${ip} ${name}
                     put_ip ${email} ${token} ${zone} ${record} ${type} ${name} ${ip} ${ttl} ${proxied}
