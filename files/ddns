@@ -31,8 +31,7 @@ function get_addr() {
 }
 
 function log() {
-    log='/tmp/log/ddns'
-    echo "[$(date +%Y%m%d.%H%M%S)] PUT ${2} TO ${3}" > ${log}.${1}
+    logger -t ddns "${1}: PUT ${2} TO ${3}"
 }
 
 function main() {
@@ -51,7 +50,7 @@ function main() {
             if [ "${type}" == "A" ]; then
                 ip=$(get_ipv4 ${iface})
                 if [ "${addr}" != "${ip}" ]; then
-                    log '4' ${ip} ${name}
+                    log ${record} ${ip} ${name}
                     put_ip ${email} ${token} ${zone} ${record} ${type} ${name} ${ip} ${ttl} ${proxied}
                     if [ $? -eq 0 ]; then
                         set_addr ${record} ${ip}
@@ -60,7 +59,7 @@ function main() {
             elif [ "${type}" == "AAAA" ]; then
                 ip=$(get_ipv6 ${iface})
                 if [ "${addr}" != "${ip}" ]; then
-                    log '6' ${ip} ${name}
+                    log ${record} ${ip} ${name}
                     put_ip ${email} ${token} ${zone} ${record} ${type} ${name} ${ip} ${ttl} ${proxied}
                     if [ $? -eq 0 ]; then
                         set_addr ${record} ${ip}
