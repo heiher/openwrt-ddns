@@ -18,6 +18,18 @@ function put_ip() {
         --data "{\"type\":\"${5}\",\"name\":\"${6}\",\"content\":\"${7}\",\"ttl\":${8},\"proxied\":${9}}"
 }
 
+function set_addr() {
+    mkdir -p /tmp/run/ddns
+    echo "${2}" > /tmp/run/ddns/${1}
+}
+
+function get_addr() {
+    file=/tmp/run/ddns/${1}
+    if [ -f "${file}" ]; then
+        cat "${file}"
+    fi
+}
+
 function log() {
     log='/tmp/log/ddns'
     echo "[$(date +%Y%m%d.%H%M%S)] PUT ${2} TO ${3}" > ${log}.${1}
@@ -27,10 +39,9 @@ function main() {
     email=$(uci -q get ddns.auth.email)
     token=$(uci -q get ddns.auth.token)
     records=$(uci -q get ddns.set.records)
-    ipv4=''
-    ipv6=''
     while [ -n "${records}" ]; do
         for record in ${records}; do
+            addr=$(get_addr ${record})
             zone=$(uci -q get ddns.${record}.zone)
             type=$(uci -q get ddns.${record}.type)
             name=$(uci -q get ddns.${record}.name)
@@ -39,21 +50,20 @@ function main() {
             iface=$(uci -q get ddns.${record}.iface)
             if [ "${type}" == "A" ]; then
                 ip=$(get_ipv4 ${iface})
-                if [ "${ipv4}" != "${ip}" ]; then
+                if [ "${addr}" != "${ip}" ]; then
                     log '4' ${ip} ${name}
                     put_ip ${email} ${token} ${zone} ${record} ${type} ${name} ${ip} ${ttl} ${proxied}
                     if [ $? -eq 0 ]; then
-                        ipv4=${ip}
+                        set_addr ${record} ${ip}
                     fi
                 fi
-            fi
-            if [ "${type}" == "AAAA" ]; then
+            elif [ "${type}" == "AAAA" ]; then
                 ip=$(get_ipv6 ${iface})
-                if [ "${ipv6}" != "${ip}" ]; then
+                if [ "${addr}" != "${ip}" ]; then
                     log '6' ${ip} ${name}
                     put_ip ${email} ${token} ${zone} ${record} ${type} ${name} ${ip} ${ttl} ${proxied}
                     if [ $? -eq 0 ]; then
-                        ipv6=${ip}
+                        set_addr ${record} ${ip}
                     fi
                 fi
             fi
