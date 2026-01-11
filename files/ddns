@@ -1,4 +1,10 @@
 #!/bin/sh
+#
+# Copyright (C) 2022-2025 hev <git@hev.cc>
+#
+# This is free software, licensed under the GNU General Public License v3.
+# See /LICENSE for more information.
+#
 
 function get_ipv4() {
     iface=${1:-$(uci -q get ddns.main.v4_iface)}
@@ -49,21 +55,14 @@ function main() {
             iface=$(uci -q get ddns.${record}.iface)
             if [ "${type}" == "A" ]; then
                 ip=$(get_ipv4 ${iface})
-                if [ "${addr}" != "${ip}" ]; then
-                    log ${record} ${ip} ${name}
-                    put_ip ${email} ${token} ${zone} ${record} ${type} ${name} ${ip} ${ttl} ${proxied}
-                    if [ $? -eq 0 ]; then
-                        set_addr ${record} ${ip}
-                    fi
-                fi
             elif [ "${type}" == "AAAA" ]; then
                 ip=$(get_ipv6 ${iface})
-                if [ "${addr}" != "${ip}" ]; then
-                    log ${record} ${ip} ${name}
-                    put_ip ${email} ${token} ${zone} ${record} ${type} ${name} ${ip} ${ttl} ${proxied}
-                    if [ $? -eq 0 ]; then
-                        set_addr ${record} ${ip}
-                    fi
+            fi
+            if [ "${addr}" != "${ip}" ]; then
+                log ${record} ${ip} ${name}
+                put_ip ${email} ${token} ${zone} ${record} ${type} ${name} ${ip} ${ttl} ${proxied}
+                if [ $? -eq 0 ]; then
+                    set_addr ${record} ${ip}
                 fi
             fi
         done

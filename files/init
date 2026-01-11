@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 #
-# Copyright (C) 2022 hev <r@hev.cc>
+# Copyright (C) 2022-2025 hev <git@hev.cc>
 #
 # This is free software, licensed under the GNU General Public License v3.
 # See /LICENSE for more information.
