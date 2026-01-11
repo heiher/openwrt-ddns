@@ -1,26 +1,24 @@
 # DDNS for OpenWrt
 
-## 简介
+A [Cloudflare][1] Dynamic DNS Client for OpenWrt.
 
-本项目是 OpenWrt 上的 [Cloudflare][1] DDNS 客户端。
+## Build
 
-## 编译
-
-- 从 OpenWrt 的 [SDK][2] 编译
+- Compile from OpenWrt [SDK][2]
 
     ```bash
-    # 以 ar71xx 平台为例
-    tar xfJ openwrt-sdk-18.06.4-ar71xx-generic_gcc-7.3.0_musl.Linux-x86_64.tar.xz
+    # x86_64
+    tar xfJ openwrt-sdk-24.10.5-x86-64_gcc-13.3.0_musl.Linux-x86_64.tar.zst
     cd openwrt-sdk-*
     
-    # 获取 Makefile
-    git clone https://github.com/heiher/openwrt-ddns.git package/ddns
+    # Fetch Makefile
+    git clone https://github.com/heiher/openwrt-ddns package/ddns
     
-    # 选中要编译的包 Network -> ddns
+    # Select Network -> ddns
     make menuconfig
     
-    # 开始编译
-    make package/ddns/{clean,compile} V=s
+    # Compile
+    make package/ddns/compile V=s
     ```
 
 [1]: https://www.cloudflare.com
